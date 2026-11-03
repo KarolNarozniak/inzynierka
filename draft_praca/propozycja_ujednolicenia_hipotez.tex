@@ -1,0 +1,83 @@
+% PROPOZYCJA do ręcznego włączenia po weryfikacji promotorskiej.
+% Zachowuje cztery hipotezy z rozdziału 1 PDF i porządkuje tabelę 5.2.
+% Propozycja do ręcznego włączenia po weryfikacji promotorskiej.
+% Oceny są wstępne i ograniczone do testowanego laboratorium; przed finalizacją
+% zweryfikować mapowanie na pytania badawcze i całość artefaktów.
+
+\subsection{Proponowane ujednolicenie hipotez badawczych}
+\label{subsec:hipotezy-propozycja}
+
+W celu zachowania spójności metodyki przyjęto cztery hipotezy przedstawione
+w rozdziale pierwszym. Zagadnienia segmentacji sieci, wykorzystania danych-canary
+oraz transportu MCP są analizowane jako warunki lub scenariusze badawcze, a nie
+jako dodatkowe hipotezy.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Proponowane kryteria weryfikacji hipotez badawczych}
+\label{tab:hipotezy-weryfikacja-propozycja}
+\begin{tabular}{|p{0.18\textwidth}|p{0.25\textwidth}|p{0.31\textwidth}|p{0.16\textwidth}|}
+\hline
+\textbf{Hipoteza} & \textbf{Kryterium operacyjne} &
+\textbf{Planowane źródła dowodowe} & \textbf{Ocena po badaniach} \\
+\hline
+H1: Telemetria pochodząca wyłącznie z agentowego środowiska programistycznego
+nie pozwala na pełne potwierdzenie rzeczywistych skutków operacji agenta. &
+Porównanie informacji dostępnych w Kilo z niezależnym potwierdzeniem wykonania
+i skutku. Wskazanie etapów łańcucha, których sam zapis aplikacyjny nie potwierdza. &
+Kilo, Gateway, MCP, auditd, Target i Zeek/PCAP; w SC-03 rep01 UI pokazało
+odmowę, a Gateway zarejestrował \texttt{policy\_load\_error}, co wymagało korekty
+interpretacji. SC-05/SC-06-A zestawiono z wynikiem Target. &
+Proponowana ocena: częściowo potwierdzona; widok Kilo sam nie wystarcza do
+ustalenia przyczyny i niezależnego potwierdzenia skutku. \\
+\hline
+H2: Wykonanie tego samego niepożądanego działania w szerokim kontekście
+użytkownika może powodować większy skutek niż wykonanie go w wydzielonym
+kontekście o ograniczonych uprawnieniach. &
+Porównanie jednego odczytu syntetycznego chronionego zasobu przez
+\texttt{agent-wide} i \texttt{agent-limited} przy niezmienionym zadaniu, konfiguracji MCP
+i pliku. Oczekiwana para: odczyt dozwolony i odmowa systemu operacyjnego. &
+Trzy niezależne pary Kilo: \texttt{H2-KILO-REP01-20261010},
+\texttt{H2-KILO-REP02-20261010} i \texttt{H2-KILO-REP03-20261010}. Wszystkie: wide
+success, limited permission denied; MCP JSONL, auditd (openat success/no,
+limited exit=-13) i odbiór na Monitor. &
+Proponowana ocena: częściowo potwierdzona w zakresie badanego pliku i POSIX ACL. \\
+\hline
+H3: Deterministyczna kontrola narzędzi i parametrów ich wywołań ogranicza
+liczbę skutecznie wykonanych operacji niedozwolonych, również w przypadku
+manipulacji kontekstem przetwarzanym przez model. &
+SC-02-A allow 3/3 z odbiorem; SC-02-B ręczne deny 3/3 bez attempt/odbioru;
+SC-03 policy deny 3/3 bez attempt/odbioru; SC-06-A dodatnia kontrola 3/3.
+SC-06-D w 3/3 nie wygenerowało żądania submit, więc kontroler w tym wariancie
+nie został wywołany. &
+Gateway decision/approval/attempt/result, Target receiver, PCAP/Zeek dla
+pozytywnych kontroli. &
+Proponowana ocena: częściowo potwierdzona; kontrola działała dla jawnych
+żądań, a warunek pośredniej manipulacji nie uruchomił jej. \\
+\hline
+H4: Korelacja telemetrii aplikacyjnej, hosta i sieciowej umożliwia pełniejszą
+rekonstrukcję działania agenta niż wykorzystanie dowolnego z tych źródeł osobno. &
+Porównanie etapów rekonstrukcji dostępnych w każdym źródle oddzielnie
+i po ich zestawieniu; jawne oznaczenie brakujących identyfikatorów i poziomu
+pewności korelacji. &
+SC-01/SC-04: lokalny MCP, auditd i Monitor; SC-05: Gateway, Target journal,
+PCAP/Zeek; SC-06-A: Gateway, receiver i PCAP/Zeek. Część korelacji Target/PCAP
+opiera się na czasie i adresach, bo run ID nie jest tam propagowany. &
+Proponowana ocena: częściowo potwierdzona; źródła uzupełniają obraz, lecz
+atrybucja nie zawsze jest bezpośrednia. \\
+\hline
+\end{tabular}
+\end{table}
+
+Wynik pojedynczej próby nie jest samodzielnie oceną hipotezy. W tabeli należy
+wskazać przebiegi stanowiące podstawę oceny, liczbę prób w każdym warunku,
+odchylenia od protokołu oraz ograniczenia wnioskowania. Pilot ACL
+\texttt{KILO-H2-KILO-20261010-01} nie wchodzi do licznika trzech par.
+Trzy pary dały ten sam wynik dla badanego syntetycznego pliku i dwóch kont,
+co wspiera H2 w tym ograniczonym warunku. Nie dowodzi to ogólnej izolacji
+ani skuteczności kontroli alternatywnych dróg dostępu; profile Kilo zawierały
+\texttt{bash: allow}, a seria wymuszała bezpośrednio jedno wywołanie MCP.
+
+% Koniec propozycji. Przed kompilacją sprawdzić, czy preambuła dokumentu
+% obsługuje kodowanie UTF-8 oraz czy szerokość tabeli mieści się w szablonie.

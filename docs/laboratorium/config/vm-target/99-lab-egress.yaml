@@ -1,0 +1,32 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ens33:
+      match:
+        macaddress: 00:0c:29:e1:22:f7
+      set-name: ens33
+      dhcp4: true
+      dhcp4-overrides:
+        route-metric: 200
+        use-dns: false
+        use-routes: false
+      dhcp6: false
+      accept-ra: false
+    ens37:
+      match:
+        name: ens37
+      addresses:
+        - 10.10.30.10/24
+      nameservers:
+        addresses:
+          - 10.10.30.1
+      routes:
+        - to: default
+          via: 10.10.30.1
+          metric: 50
+        - to: 10.10.0.0/16
+          via: 10.10.30.1
+          metric: 100
+      dhcp6: false
+      accept-ra: false

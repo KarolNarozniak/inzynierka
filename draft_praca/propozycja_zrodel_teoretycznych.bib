@@ -1,0 +1,122 @@
+% Propozycje bibliografii do zweryfikowania i użycia w pracy.
+% Pozycje online zweryfikowane 2026-10-12; dokumentacja może się zmieniać.
+% Nie oznacza to, że pozycje były cytowane we wcześniejszej wersji pracy.
+
+@article{Greshake2023Indirect,
+  author       = {Greshake, Kai and Abdelnabi, Sahar and Mishra, Shailesh and Endres, Christoph and Holz, Thorsten and Fritz, Mario},
+  title        = {Not What You've Signed Up For: Compromising Real-World {LLM}-Integrated Applications with Indirect Prompt Injection},
+  journal      = {arXiv preprint arXiv:2302.12173},
+  year         = {2023},
+  doi          = {10.48550/arXiv.2302.12173},
+  url          = {https://arxiv.org/abs/2302.12173},
+  urldate      = {2026-10-12}
+}
+
+@online{OWASPLLMInjection,
+  author       = {{OWASP GenAI Security Project}},
+  title        = {{LLM} Prompt Injection Prevention Cheat Sheet},
+  url          = {https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html},
+  urldate      = {2026-10-12}
+}
+
+@techreport{NISTAI1001,
+  author       = {Tabassi, Elham},
+  title        = {Artificial Intelligence Risk Management Framework ({AI RMF} 1.0)},
+  institution  = {National Institute of Standards and Technology},
+  number       = {NIST AI 100-1},
+  year         = {2023},
+  doi          = {10.6028/NIST.AI.100-1},
+  url          = {https://doi.org/10.6028/NIST.AI.100-1},
+  urldate      = {2026-10-12}
+}
+
+@online{MCPArchitecture,
+  author       = {{Model Context Protocol}},
+  title        = {Architecture, version 2025-06-18},
+  url          = {https://modelcontextprotocol.io/specification/2025-06-18/architecture},
+  urldate      = {2026-10-12},
+  note         = {Źródło do ogólnego opisu architektury; nie potwierdza wersji wynegocjowanej w badanej sesji}
+}
+
+@online{KiloMCPDocs,
+  author       = {{Kilo Code}},
+  title        = {Using {MCP} in Kilo Code},
+   url          = {https://kilocode.ai/docs/features/mcp/using-mcp-in-kilo-code},
+  urldate      = {2026-10-12},
+  note         = {Dokumentacja producenta; zachować odrębność od dowodu ustawień aktywnych w kampanii}
+}
+
+@online{KiloAutoApproval,
+  author       = {{Kilo Code}},
+  title        = {Auto-Approving Actions},
+  url          = {https://kilocode.ai/docs/features/auto-approving-actions},
+  urldate      = {2026-10-12}
+}
+
+@online{OpenAIModelsGPT41Mini,
+  author       = {{OpenAI}},
+  title        = {{GPT-4.1 mini} model documentation},
+  url          = {https://platform.openai.com/docs/models/gpt-4.1-mini},
+  urldate      = {2026-10-12},
+  note         = {Publiczny identyfikator i opis modelu; nie dowodzi model ID zwróconego w badanym response}
+}
+
+@online{OpenAIChatCompletionsAPI,
+  author       = {{OpenAI}},
+  title        = {Chat Completions API Reference},
+  url          = {https://platform.openai.com/docs/api-reference/chat/create},
+  urldate      = {2026-10-12},
+  note         = {Opis parametrów requestu API; nie jest źródłem wartości użytych w badanych runach}
+}
+
+@online{LiteLLMConfig,
+  author       = {{LiteLLM}},
+  title        = {Proxy Configuration: config.yaml},
+  url          = {https://docs.litellm.ai/docs/proxy/configs},
+  urldate      = {2026-10-12}
+}
+
+@online{LiteLLMVirtualKeys,
+  author       = {{LiteLLM}},
+  title        = {Virtual Keys and Proxy Authentication},
+  url          = {https://docs.litellm.ai/docs/proxy/virtual_keys},
+  urldate      = {2026-10-12},
+  note         = {Opis master key/virtual keys; nie zakładać użycia bazy danych w badanym wdrożeniu}
+}
+
+@online{OPNsenseRules,
+  author       = {{OPNsense}},
+  title        = {Firewall Rules},
+  url          = {https://docs.opnsense.org/manual/firewall.html},
+  urldate      = {2026-10-12}
+}
+
+@online{OPNsensePacketCapture,
+  author       = {{OPNsense}},
+  title        = {Interface Diagnostics: Packet Capture},
+  url          = {https://docs.opnsense.org/manual/diagnostics_interfaces.html},
+  urldate      = {2026-10-12}
+}
+
+@online{LinuxAclManual,
+  author       = {{Linux man-pages project}},
+  title        = {acl(5) --- Access Control Lists},
+   url          = {https://manpages.debian.org/bookworm/acl/acl.5.en.html},
+  urldate      = {2026-10-12},
+  note         = {Wykorzystać do opisu mechanizmu; rozszerzone wpisy ACL w badanym pliku nie zostały odczytane przez getfacl}
+}
+
+@online{ZeekQuickstart,
+  author       = {{The Zeek Project}},
+  title        = {Zeek Quick Start Guide},
+  url          = {https://docs.zeek.org/en/current/quickstart.html},
+  urldate      = {2026-10-12}
+}
+
+@online{FluentBitForward,
+  author       = {{Fluent Bit}},
+  title        = {Forward Output Plugin},
+  url          = {https://docs.fluentbit.io/manual/data-pipeline/outputs/forward},
+  urldate      = {2026-10-12},
+  note         = {Dokumentacja opisuje plain TCP oraz Secure Forward/TLS jako osobne tryby}
+}

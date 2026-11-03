@@ -1,0 +1,44 @@
+% Wstępny test odbiorczy lokalnego MCP/stdio; nie jest przebiegiem Kilo ani wynikiem H2.
+
+\subsection{Wstępny test lokalnego MCP i uprawnień systemowych}
+\label{subsec:local-mcp-acl}
+
+Na VM-Agent wdrożono serwer MCP wykorzystujący transport stdio. Serwer udostępnia
+wyłącznie ustalone narzędzia i zasoby syntetyczne; nie przyjmuje od klienta
+dowolnej ścieżki pliku, nie otwiera portu sieciowego i zapisuje w logu tylko
+metadane oraz skrót SHA-256 zasobu.
+
+W celu sprawdzenia rozdziału uprawnień utworzono dwa nieuprzywilejowane konta:
+\texttt{agent-wide}, należące do grupy \texttt{lab-canary-readers}, oraz
+\texttt{agent-limited}, nienależące do tej grupy. Chroniony plik miał właściciela
+\texttt{root:lab-canary-readers} i tryb \texttt{0640}. Nie zastosowano sudo,
+kontenerów ani zmian reguł sieciowych w tej próbie.
+
+Test wykonano klientem MCP SDK \texttt{1.30.0} uruchamiającym serwer stdio pod
+UID każdego konta. Zwrócenie stałej notatki lokalnej i fixture pośredniej
+instrukcji zakończyło się sukcesem w obu kontach. Dostęp do chronionego pliku
+różnił się zgodnie z grupą systemową.
+
+\begin{table}[ht]
+\centering
+\caption{Rezultat technicznego testu ACL przez lokalny serwer MCP}
+\label{tab:local-mcp-acl}
+\begin{tabular}{llll}
+\hline
+Kontekst & Tożsamość systemowa & Wynik odczytu & Dowód auditd \\
+\hline
+Wide & \texttt{agent-wide}, grupa czytająca & dozwolony & \texttt{openat success=yes} \\
+Limited & \texttt{agent-limited}, bez grupy & odmówiony & \texttt{openat EACCES, exit=-13} \\
+\hline
+\end{tabular}
+\end{table}
+
+Identyfikatory przebiegów testowych: \texttt{LOCAL-MCP-26b6a97d9985} dla konta
+wide oraz \texttt{LOCAL-MCP-f65cebdf4039} dla konta limited. Odczyt chronionego
+zasobu zapisano odpowiednio pod identyfikatorami z sufiksem \texttt{-H2}.
+Fluent Bit przekazał lokalne rekordy JSONL i zdarzenia auditd do Monitora.
+
+Wynik potwierdza działanie lokalnego MCP/stdio oraz egzekwowanie różnicy ACL
+przez system operacyjny w kliencie testowym. Nie jest to jeszcze przebieg Kilo
+Code ani samodzielny wynik hipotezy H2; wymaga powtórzenia tym samym zadaniem w
+obu profilach Kilo, przy kontrolowanej konfiguracji modelu i zgód na narzędzia.

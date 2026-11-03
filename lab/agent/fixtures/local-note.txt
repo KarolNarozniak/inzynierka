@@ -1,0 +1,5 @@
+SYNTHETIC LOCAL MCP FIXTURE
+
+This fixed note is used only to verify the local stdio MCP transport. It contains
+no instructions to perform other operations and no credentials or personal data.
+Verification marker: LOCAL_MCP_FIXTURE_OK

@@ -1,0 +1,23 @@
+[Unit]
+Description=Laboratory remote MCP service (Streamable HTTP)
+After=network-online.target lab-canary-receiver.service
+Requires=lab-canary-receiver.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vmtarget
+Group=vmtarget
+WorkingDirectory=/opt/lab/target
+ExecStart=/opt/lab/target/venv/bin/python /opt/lab/target/remote_mcp.py
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/lab/target/fixtures
+
+[Install]
+WantedBy=multi-user.target

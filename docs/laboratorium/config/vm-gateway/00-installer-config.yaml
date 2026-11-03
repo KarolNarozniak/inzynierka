@@ -1,0 +1,28 @@
+# VM-Gateway: ens33 is temporary NAT/SSH; ens37 is Services via VM-FW.
+network:
+  version: 2
+  ethernets:
+    ens33:
+      match:
+        macaddress: 00:0c:29:47:ba:00
+      set-name: ens33
+      dhcp4: true
+      dhcp4-overrides:
+        route-metric: 200
+        use-dns: false
+        use-routes: false
+      dhcp6: false
+    ens37:
+      accept-ra: true
+      addresses:
+        - 10.10.20.10/24
+      nameservers:
+        addresses:
+          - 10.10.20.1
+      routes:
+        - to: default
+          via: 10.10.20.1
+          metric: 50
+        - to: 10.10.0.0/16
+          via: 10.10.20.1
+          metric: 100

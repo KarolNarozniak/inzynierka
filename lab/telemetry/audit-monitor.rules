@@ -1,0 +1,3 @@
+# Monitor changes to the telemetry collector configuration itself.
+-w /etc/audit/rules.d/99-lab.rules -p wa -k lab_audit_config
+-w /etc/fluent-bit/fluent-bit.conf -p wa -k lab_telemetry_config

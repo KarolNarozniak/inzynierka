@@ -1,0 +1,23 @@
+[Unit]
+Description=Laboratory MCP deterministic policy proxy
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/lab/control/policy.json
+
+[Service]
+Type=simple
+User=vmgateway
+Group=vmgateway
+WorkingDirectory=/opt/lab/control
+ExecStart=/opt/lab/litellm/venv/bin/python /opt/lab/control/mcp_control_proxy.py
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/lab-control /var/lib/lab-control
+
+[Install]
+WantedBy=multi-user.target

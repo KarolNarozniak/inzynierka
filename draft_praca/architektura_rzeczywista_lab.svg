@@ -1,0 +1,215 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1570" viewBox="0 0 1800 1570" role="img" aria-labelledby="title desc">
+  <title id="title">Rzeczywista architektura laboratorium badawczego</title>
+  <desc id="desc">Diagram pokazuje VM-Agent, VM-Gateway, VM-Target, VM-Monitor, OPNsense, strefy VMnet, przepływy przez zaporę, wyjście Gateway do API modelu oraz osobną administracyjną sieć NAT.</desc>
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1677c8"/></marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d97706"/></marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/></marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/></marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+    <style>
+      text { font-family: "Segoe UI", Arial, sans-serif; fill: #172033; }
+      .title { font-size: 34px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 17px; fill: #475569; }
+      .zone-title { font-size: 20px; font-weight: 700; }
+      .vm-name { font-size: 18px; font-weight: 700; }
+      .body { font-size: 16px; }
+      .small { font-size: 14px; fill: #475569; }
+      .tiny { font-size: 12px; fill: #64748b; }
+      .flow-id { font-size: 15px; font-weight: 700; }
+      .flow-label { font-size: 14px; fill: #334155; }
+      .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 14; filter: url(#shadow); }
+      .pill { fill: #f1f5f9; stroke: #cbd5e1; stroke-width: 1; rx: 10; }
+      .route { fill: none; stroke: #1677c8; stroke-width: 3; stroke-linecap: round; marker-end: url(#arrow-blue); }
+      .route.orange { stroke: #d97706; marker-end: url(#arrow-orange); }
+      .route.purple { stroke: #7c3aed; marker-end: url(#arrow-purple); }
+      .route.green { stroke: #15803d; marker-end: url(#arrow-green); }
+      .route.gray { stroke: #64748b; marker-end: url(#arrow-gray); }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1510" fill="#f8fafc"/>
+  <text x="60" y="58" class="title">Architektura rzeczywistego laboratorium badawczego</text>
+  <text x="60" y="88" class="subtitle">Rzeczywiste strefy, maszyny, adresy oraz dozwolone przepływy — stan udokumentowany w laboratorium</text>
+
+  <!-- External model service -->
+  <g>
+    <rect x="590" y="112" width="620" height="150" rx="22" fill="#e8f4ff" stroke="#5aa2d6" stroke-width="2"/>
+    <rect x="620" y="128" width="155" height="27" rx="13" fill="#d2eaff"/>
+    <text x="697" y="147" text-anchor="middle" class="small" font-weight="700">INTERNET / API</text>
+    <text x="900" y="174" text-anchor="middle" class="vm-name">OpenAI API</text>
+    <text x="900" y="202" text-anchor="middle" class="body">Konfiguracja upstream LiteLLM:</text>
+    <text x="900" y="229" text-anchor="middle" class="body" font-weight="700">openai/gpt-4.1-mini</text>
+    <text x="900" y="249" text-anchor="middle" class="tiny">Identyfikator z konfiguracji bramy; nie jest aliasem widocznym w Kilo</text>
+  </g>
+
+  <!-- WAN link -->
+  <path d="M 900 350 L 900 267" class="route green"/>
+  <rect x="930" y="286" width="205" height="34" rx="10" fill="#ecfdf5" stroke="#86efac"/>
+  <text x="1032" y="308" text-anchor="middle" class="small" font-weight="700">F-02 · TCP/443 · WAN</text>
+
+  <!-- Firewall core -->
+  <g>
+    <rect x="545" y="350" width="710" height="138" rx="16" fill="#fff7ed" stroke="#d97706" stroke-width="3"/>
+    <rect x="570" y="368" width="188" height="28" rx="14" fill="#ffedd5"/>
+    <text x="664" y="388" text-anchor="middle" class="small" font-weight="700">ROUTING / FIREWALL</text>
+    <text x="900" y="416" text-anchor="middle" class="vm-name">VM-FW · OPNsense 24.7</text>
+    <text x="900" y="445" text-anchor="middle" class="body">VMnet8 WAN · 192.168.234.150/24 · upstream 192.168.234.2</text>
+    <text x="900" y="469" text-anchor="middle" class="small">VMnet10 10.10.10.1 · VMnet11 10.10.20.1 · VMnet12 10.10.30.1 · VMnet13 10.10.40.1</text>
+  </g>
+
+  <!-- Internal network bus: each zone has its own VMnet, connected only through FW -->
+  <path d="M 900 488 L 900 510 L 250 510 L 250 532 M 900 510 L 680 510 L 680 532 M 900 510 L 1120 510 L 1120 532 M 900 510 L 1550 510 L 1550 532" fill="none" stroke="#94a3b8" stroke-width="2"/>
+  <circle cx="900" cy="510" r="5" fill="#d97706"/>
+
+  <!-- Zone cards -->
+  <g>
+    <rect x="50" y="532" width="400" height="226" class="card"/>
+    <rect x="50" y="532" width="400" height="43" rx="14" fill="#eaf3ff" stroke="#93c5fd"/>
+    <text x="72" y="560" class="zone-title" fill="#155e9a">AGENT · VMnet10</text>
+    <text x="72" y="601" class="vm-name">VM-Agent · 10.10.10.10/24</text>
+    <text x="72" y="631" class="body">Ubuntu Desktop 26.04.1 · VS Code</text>
+    <text x="72" y="659" class="body">Kilo Code 7.8.1 · model alias</text>
+    <text x="72" y="683" class="body" font-weight="700">laboratory-model</text>
+    <text x="72" y="714" class="small">Lokalny MCP: stdio · bez TCP/IP</text>
+    <text x="72" y="740" class="tiny">Brama: 10.10.10.1 · VM-FW / AGENT</text>
+  </g>
+
+  <g>
+    <rect x="480" y="532" width="400" height="226" class="card"/>
+    <rect x="480" y="532" width="400" height="43" rx="14" fill="#ecfdf5" stroke="#86efac"/>
+    <text x="502" y="560" class="zone-title" fill="#166534">USŁUGI · VMnet11</text>
+    <text x="502" y="601" class="vm-name">VM-Gateway · 10.10.20.10/24</text>
+    <text x="502" y="631" class="body">LiteLLM proxy · TCP/4000</text>
+    <text x="502" y="659" class="body">MCP policy proxy · TCP/8001</text>
+    <text x="502" y="687" class="body">Profil secured / baseline / deny_canary</text>
+    <text x="502" y="715" class="small">Klucz dostawcy przechowywany na Gateway</text>
+    <text x="502" y="740" class="tiny">Brama: 10.10.20.1 · VM-FW / OPT1</text>
+  </g>
+
+  <g>
+    <rect x="910" y="532" width="400" height="226" class="card"/>
+    <rect x="910" y="532" width="400" height="43" rx="14" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="932" y="560" class="zone-title" fill="#9a3412">CELE · VMnet12</text>
+    <text x="932" y="601" class="vm-name">VM-Target · 10.10.30.10/24</text>
+    <text x="932" y="631" class="body">Remote MCP · Streamable HTTP</text>
+    <text x="932" y="659" class="body">MCP endpoint · TCP/8000</text>
+    <text x="932" y="687" class="body">Canary receiver · 127.0.0.1:8080</text>
+    <text x="932" y="715" class="small">Receiver loopback-only; no inbound rule</text>
+    <text x="932" y="740" class="tiny">Brama: 10.10.30.1 · VM-FW / OPT2</text>
+  </g>
+
+  <g>
+    <rect x="1340" y="532" width="410" height="226" class="card"/>
+    <rect x="1340" y="532" width="410" height="43" rx="14" fill="#f5f3ff" stroke="#c4b5fd"/>
+    <text x="1362" y="560" class="zone-title" fill="#6d28d9">MONITORING · VMnet13</text>
+    <text x="1362" y="601" class="vm-name">VM-Monitor · 10.10.40.10/24</text>
+    <text x="1362" y="631" class="body">Fluent Bit Forward · TCP/24224</text>
+    <text x="1362" y="659" class="body">Centralne logi · receiver</text>
+    <text x="1362" y="687" class="body">Zeek 8.0.10 · analiza PCAP offline</text>
+    <text x="1362" y="715" class="small">Capture ruchu miedzystrefowego na VM-FW</text>
+    <text x="1362" y="740" class="tiny">Brama: 10.10.40.1 · VM-FW / OPT3</text>
+  </g>
+
+  <!-- Main traffic flow table as routed paths through the firewall -->
+  <text x="60" y="805" class="zone-title">Przepływy badawcze — każdy ruch między strefami przechodzi przez VM-FW</text>
+  <text x="60" y="830" class="small">Strzałka wskazuje inicjatora i kierunek przepływu; porty zgodne z udokumentowaną macierzą reguł.</text>
+
+  <rect x="50" y="850" width="1700" height="48" rx="10" fill="#e2e8f0"/>
+  <text x="75" y="881" class="small" font-weight="700">REGUŁA</text>
+  <text x="250" y="881" class="small" font-weight="700">ŹRÓDŁO</text>
+  <text x="900" y="881" text-anchor="middle" class="small" font-weight="700">OPNsense · filtrowanie/routing</text>
+  <text x="1465" y="881" text-anchor="middle" class="small" font-weight="700">CEL</text>
+
+  <!-- Flow row helper style: each row is a routed lane; FW is explicitly in-path. -->
+  <g>
+    <rect x="50" y="910" width="1700" height="57" rx="10" fill="#ffffff" stroke="#dbe4ee"/>
+    <text x="75" y="945" class="flow-id" fill="#1677c8">F-01</text>
+    <text x="250" y="945" class="flow-label">VM-Agent · 10.10.10.10</text>
+    <path d="M 510 938 L 720 938" class="route"/>
+    <rect x="745" y="919" width="310" height="38" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="900" y="944" text-anchor="middle" class="small" font-weight="700">VM-FW · LAN → OPT1</text>
+    <path d="M 1080 938 L 1330 938" class="route"/>
+    <text x="1450" y="945" text-anchor="middle" class="flow-label">VM-Gateway :4000 · LiteLLM</text>
+  </g>
+
+  <g>
+    <rect x="50" y="976" width="1700" height="57" rx="10" fill="#ffffff" stroke="#dbe4ee"/>
+    <text x="75" y="1011" class="flow-id" fill="#1677c8">F-06</text>
+    <text x="250" y="1011" class="flow-label">VM-Agent · 10.10.10.10</text>
+    <path d="M 510 1004 L 720 1004" class="route"/>
+    <rect x="745" y="985" width="310" height="38" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="900" y="1010" text-anchor="middle" class="small" font-weight="700">VM-FW · LAN → OPT1</text>
+    <path d="M 1080 1004 L 1330 1004" class="route"/>
+    <text x="1450" y="1011" text-anchor="middle" class="flow-label">VM-Gateway :8001 · policy proxy</text>
+  </g>
+
+  <g>
+    <rect x="50" y="1042" width="1700" height="57" rx="10" fill="#ffffff" stroke="#dbe4ee"/>
+    <text x="75" y="1077" class="flow-id" fill="#d97706">F-07</text>
+    <text x="250" y="1077" class="flow-label">VM-Gateway · 10.10.20.10</text>
+    <path d="M 510 1070 L 720 1070" class="route orange"/>
+    <rect x="745" y="1051" width="310" height="38" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="900" y="1076" text-anchor="middle" class="small" font-weight="700">VM-FW · OPT1 → OPT2</text>
+    <path d="M 1080 1070 L 1330 1070" class="route orange"/>
+    <text x="1450" y="1077" text-anchor="middle" class="flow-label">VM-Target :8000 · remote MCP</text>
+  </g>
+
+  <g>
+    <rect x="50" y="1108" width="1700" height="57" rx="10" fill="#ffffff" stroke="#dbe4ee"/>
+    <text x="75" y="1143" class="flow-id" fill="#15803d">F-02</text>
+    <text x="250" y="1143" class="flow-label">VM-Gateway · 10.10.20.10</text>
+    <path d="M 510 1136 L 720 1136" class="route green"/>
+    <rect x="745" y="1117" width="310" height="38" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="900" y="1142" text-anchor="middle" class="small" font-weight="700">VM-FW · OPT1 → WAN/VMnet8</text>
+    <path d="M 1080 1136 L 1330 1136" class="route green"/>
+    <text x="1450" y="1143" text-anchor="middle" class="flow-label">Internet → OpenAI API · TCP/443</text>
+  </g>
+
+  <g>
+    <rect x="50" y="1174" width="1700" height="57" rx="10" fill="#ffffff" stroke="#dbe4ee"/>
+    <text x="75" y="1209" class="flow-id" fill="#7c3aed">F-04-A</text>
+    <text x="250" y="1209" class="flow-label">VM-Agent · 10.10.10.10</text>
+    <path d="M 510 1202 L 720 1202" class="route purple"/>
+    <rect x="745" y="1183" width="310" height="38" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="900" y="1208" text-anchor="middle" class="small" font-weight="700">VM-FW · LAN → OPT3</text>
+    <path d="M 1080 1202 L 1330 1202" class="route purple"/>
+    <text x="1450" y="1209" text-anchor="middle" class="flow-label">VM-Monitor :24224 · Fluent Bit</text>
+  </g>
+
+  <g>
+    <rect x="50" y="1240" width="1700" height="57" rx="10" fill="#ffffff" stroke="#dbe4ee"/>
+    <text x="75" y="1275" class="flow-id" fill="#7c3aed">F-04-G</text>
+    <text x="250" y="1275" class="flow-label">VM-Gateway · 10.10.20.10</text>
+    <path d="M 510 1268 L 720 1268" class="route purple"/>
+    <rect x="745" y="1249" width="310" height="38" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="900" y="1274" text-anchor="middle" class="small" font-weight="700">VM-FW · OPT1 → OPT3</text>
+    <path d="M 1080 1268 L 1330 1268" class="route purple"/>
+    <text x="1450" y="1275" text-anchor="middle" class="flow-label">VM-Monitor :24224 · Fluent Bit</text>
+  </g>
+
+  <g>
+    <rect x="50" y="1306" width="1700" height="57" rx="10" fill="#ffffff" stroke="#dbe4ee"/>
+    <text x="75" y="1341" class="flow-id" fill="#7c3aed">F-04-T</text>
+    <text x="250" y="1341" class="flow-label">VM-Target · 10.10.30.10</text>
+    <path d="M 510 1334 L 720 1334" class="route purple"/>
+    <rect x="745" y="1315" width="310" height="38" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="900" y="1340" text-anchor="middle" class="small" font-weight="700">VM-FW · OPT2 → OPT3</text>
+    <path d="M 1080 1334 L 1330 1334" class="route purple"/>
+    <text x="1450" y="1341" text-anchor="middle" class="flow-label">VM-Monitor :24224 · Fluent Bit</text>
+  </g>
+
+  <!-- Disabled direct route -->
+  <rect x="50" y="1372" width="1700" height="48" rx="10" fill="#fff1f2" stroke="#fda4af"/>
+  <text x="75" y="1403" class="flow-id" fill="#be123c">F-03 · DISABLED</text>
+  <text x="285" y="1403" class="flow-label">VM-Agent → VM-Target TCP/8000 bezpośrednio — wyłączone; zdalny MCP ma przechodzić przez Gateway.</text>
+  <path d="M 1420 1386 L 1490 1406 L 1420 1416 M 1490 1386 L 1420 1416" fill="none" stroke="#be123c" stroke-width="3"/>
+
+  <!-- Administration and interpretation notes -->
+  <rect x="50" y="1435" width="1700" height="88" rx="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="75" y="1465" class="small" font-weight="700">Administracja poza badaną segmentacją:</text>
+  <text x="75" y="1491" class="small">Każda VM Ubuntu ma dodatkową NIC1 do VMware VMnet8/NAT (SSH/konfiguracja); ruch ten nie jest ścieżką badaną. OPNsense WAN również łączy VMnet8 z NAT.</text>
+  <text x="75" y="1513" class="small">Lokalny MCP Agent działa przez stdio (bez ruchu IP). Canary receiver Target nasłuchuje wyłącznie na 127.0.0.1:8080. Fluent Bit Forward TCP/24224 w odseparowanej sieci nie używa TLS ani uwierzytelniania protokołu.</text>
+
+  <text x="60" y="1548" class="tiny">Adresacja wg docs/laboratorium/adresacja-sieci.md · Reguły wg docs/laboratorium/opnsense-reguly-startowe.md · F-03 wyłączona</text>
+</svg>

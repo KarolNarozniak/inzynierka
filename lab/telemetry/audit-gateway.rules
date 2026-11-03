@@ -1,0 +1,5 @@
+# Monitor policy, policy-proxy audit output, and telemetry configuration.
+-w /etc/audit/rules.d/99-lab.rules -p wa -k lab_audit_config
+-w /etc/fluent-bit/fluent-bit.conf -p wa -k lab_telemetry_config
+-w /opt/lab/control/policy.json -p wa -k lab_policy_config
+-w /var/log/lab-control/decisions.jsonl -p wa -k lab_control_audit_log

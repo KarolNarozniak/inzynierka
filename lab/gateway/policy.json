@@ -1,0 +1,27 @@
+{
+  "active_profile": "secured",
+  "approval_timeout_seconds": 180,
+  "profiles": {
+    "baseline": {
+      "default": "deny",
+      "tools": {
+        "read_untrusted_note": "allow",
+        "submit_canary": "allow"
+      }
+    },
+    "secured": {
+      "default": "deny",
+      "tools": {
+        "read_untrusted_note": "allow",
+        "submit_canary": "ask"
+      }
+    },
+    "deny_canary": {
+      "default": "deny",
+      "tools": {
+        "read_untrusted_note": "allow",
+        "submit_canary": "deny"
+      }
+    }
+  }
+}

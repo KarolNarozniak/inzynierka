@@ -1,0 +1,53 @@
+% Fragment wyników do późniejszego włączenia do wersji LaTeX pracy.
+% Oparty na przebiegu PCAP-MCP-20261010-c2639542; nie jest oceną SC-05 ani hipotezy.
+
+\subsection{Weryfikacja przechwytywania i analizy ruchu MCP}
+\label{subsec:pcap-mcp-smoke}
+
+W celu sprawdzenia punktów obserwacji OPNsense wykonano pojedyncze, kontrolowane
+wywołanie narzędzia \texttt{read\_untrusted\_note} przez policy proxy. Klient testowy
+działał na VM-Agent i połączył się z proxy na VM-Gateway, a proxy wywołało zdalny
+serwer MCP na VM-Target. Nie wywołano narzędzia \texttt{submit\_canary}; test nie
+przenosił danych-canary.
+
+Gateway zarejestrował decyzję \texttt{allow}, próbę wykonania oraz wynik
+\texttt{success}. Identyfikator przebiegu wynosił
+\texttt{PCAP-MCP-20261010-c2639542}. Źródłowy adres klienta odnotowany przez
+Gateway to \texttt{10.10.10.10}. Odbiornik canary na VM-Target nie zawiera wpisu
+dla tego identyfikatora.
+
+Pakiety przechwycono na trzech interfejsach OPNsense i przeanalizowano offline
+przez Zeek w wersji \texttt{8.0.10}. Zestawienie pokazano w tabeli
+\ref{tab:pcap-mcp-zeek}.
+
+\begin{table}[ht]
+\centering
+\caption{Wyniki analizy PCAP dla kontrolowanego wywołania MCP}
+\label{tab:pcap-mcp-zeek}
+\begin{tabular}{lrrr}
+\hline
+Interfejs & Port & \texttt{conn.log} & \texttt{http.log} \\
+\hline
+LAN / em1  & 8001 & 3 & 3 \\
+OPT1 / em2 & 8000 & 2 & 4 \\
+OPT2 / em3 & 8000 & 2 & 4 \\
+\hline
+\end{tabular}
+\end{table}
+
+SHA-256 plików PCAP: LAN/em1 —
+\texttt{a154f16bddb83134\allowbreak 3f93ddba0a6f2bae\allowbreak 8cf3c42e15cabe92\allowbreak bbb0807c7035ed7d};
+OPT1/em2 —
+\texttt{746cea3aedd7fba1\allowbreak a09bbd1609e7202a\allowbreak cb1731245e8929cc\allowbreak 21297f888aa5b6e5};
+OPT2/em3 —
+\texttt{b320cb7b29ac9455\allowbreak e51d6d5c878e1ec0\allowbreak 8c9b34f7e32982f7\allowbreak 738db3a07672915d}.
+Capture em2 i em3 obserwują tę samą trasowaną komunikację po przeciwnych stronach
+firewalla, dlatego ich wpisów nie należy interpretować jako odrębnych wywołań
+agenta. Zeek nie utworzył pliku \texttt{weird.log} dla tych przechwyceń.
+
+Wynik potwierdza, że w tej próbie komunikacja MCP była widoczna na zaplanowanych
+interfejsach i mogła zostać przetworzona przez Zeek. Jest to test dymny ścieżki
+sieciowej i analizy PCAP, wykonany klientem MCP, a nie scenariusz Kilo Code ani
+dowód realizacji hipotezy badawczej. Surowe pliki przechowywane są poza
+repozytorium w \texttt{/var/log/lab-telemetry/pcap/}; do repozytorium trafiają
+wyłącznie hashe oraz zredagowane wyniki analizy.

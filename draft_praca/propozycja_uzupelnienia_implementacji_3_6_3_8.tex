@@ -1,0 +1,215 @@
+% PROPOZYCJA tekstu na podstawie artefaktów dostępnych w repozytorium,
+% dzienników VM, plików VMX i zapisów przebiegów. Wymaga włączenia do właściwego
+% numeru rozdziału, sprawdzenia cytowań i ostatecznej weryfikacji autora/promotora.
+% Braki dowodowe są jawnie opisane; nie należy zastępować ich wartościami domyślnymi.
+
+\subsection{Implementacja maszyny agenta}
+\label{subsec:implementacja-vm-agent-propozycja}
+
+Maszyna VM-Agent pracowała pod Ubuntu Desktop 26.04.1 LTS. Zapisany plik VMX
+określa 2 vCPU, 8096 MiB RAM i dwie karty sieciowe: interfejs administracyjny
+VMnet8/NAT oraz interfejs badawczy VMnet10 z adresem 10.10.10.10/24.
+Maszyna miała zainstalowane Visual Studio Code 1.139.1 i rozszerzenie Kilo
+Code 7.8.1 w wariancie Linux x64. Brama strefy Agent znajdowała się na
+VM-FW pod adresem 10.10.10.1. Interfejs NAT służył do administracji SSH;
+ruch eksperymentalny kierowano przez bramę strefy i OPNsense.
+
+Na VM-Agent utworzono dwa osobne konta systemowe: \texttt{agent-wide}
+(UID 1001) oraz \texttt{agent-limited} (UID 1002). W konfiguracji porównawczej
+\texttt{agent-wide} należał do grupy \texttt{lab-canary-readers}, a
+\texttt{agent-limited} nie należał do tej grupy. Dziennik wdrożenia stwierdza,
+że konta nie należały do grup \texttt{sudo}, \texttt{lxd} ani \texttt{docker}.
+Syntetyczny plik chroniony był tworzony jako \texttt{root:lab-canary-readers}
+z trybem \texttt{0640}. W zachowanych wynikach auditd zdarzenia
+\texttt{openat} dla pliku miały \texttt{success=yes} dla UID 1001 i
+\texttt{success=no}, \texttt{exit=-13} (\texttt{EACCES}) dla UID 1002.
+Szczegóły par H2, identyfikatory audytu oraz potwierdzenia przekazania logów
+do Monitora zestawiono w \texttt{docs/laboratorium/kilo-preflight.md}
+i \texttt{docs/laboratorium/maszyny/vm-agent.md}.
+
+Podany właściciel, grupa, tryb i różnica w członkostwie grupowym opisują
+porównanie podstawowych uprawnień POSIX/DAC. W repozytorium nie ma wyniku
+\texttt{getfacl} dla chronionego pliku. Semantykę podstawowych praw dostępu POSIX
+można podeprzeć dokumentacją systemową \cite{LinuxAclManual}; nie rozstrzyga się zatem, czy system
+posiadał dodatkowe wpisy rozszerzonej ACL. Wynik H2 dotyczy tego pliku i tych
+kont; nie dowodzi izolacji VM/kontenera ani wyeliminowania innych sposobów
+dostępu.
+
+Trzy niezależne pary H2 wykonano w Kilo Code. W każdej parze oba konta
+wywoływały raz narzędzie \texttt{read\_protected\_canary} dla tego samego
+run ID i tego samego bieżącego syntetycznego pliku. Wynik we wszystkich
+parach był zgodny: \texttt{agent-wide} uzyskał odczyt, a
+\texttt{agent-limited} otrzymał odmowę systemu operacyjnego. Każdą parę
+potwierdzono przez local MCP JSONL, auditd i wpisy odebrane na VM-Monitor.
+Pilot oraz próby z niezgodnym run ID nie weszły do licznika.
+
+Zrzuty aktywnej konfiguracji Kilo pokazywały regułę ogólną
+\texttt{"*": "deny"}, jawne \texttt{allow} dla używanych narzędzi MCP
+oraz wyjątek \texttt{"bash": "allow"}. Interfejs Kilo pokazywał
+automatyczne zatwierdzenie wywołań MCP na podstawie dopasowanej reguły.
+Nie należy więc opisywać konfiguracji jako ograniczającej agenta wyłącznie
+do MCP ani jako blokującej shell. W badaniu H2 wymuszano jedno wskazane
+wywołanie MCP, a różnicę skutku egzekwował system plików.
+
+Zgoda Kilo na samo wywołanie narzędzia i decyzja policy proxy są odrębnymi
+zdarzeniami. Kilo automatycznie dopuszczało wywołania objęte regułą
+\texttt{allow}; natomiast w profilu Gateway \texttt{secured} narzędzie
+\texttt{submit\_canary} otrzymywało \texttt{ask} i czekało na niezależną
+decyzję operatora. Zapis decyzji Gateway, decyzji operatora, próby i wyniku
+znajduje się w \texttt{/var/log/lab-control/decisions.jsonl} na VM-Gateway
+i w centralnych rekordach Fluent Bit. W kampanii używano trybu Kilo
+widocznego w zrzutach jako \texttt{Code}; nie zachowano osobnych metadanych
+trybu dla każdego runu. Oba konta miały osobne pliki
+\texttt{\textasciitilde/.config/kilo/kilo.jsonc} w trybie \texttt{0600}; Kilo uruchamiało
+lokalny serwer poleceniem
+\texttt{/opt/lab/agent-mcp/venv/bin/python /opt/lab/agent-mcp/local\_mcp\_stdio.py}
+i serwer zdalny pod adresem Gateway TCP/8001. Profile providera i credential
+ustawiono oddzielnie w UI; nie kopiowano credential storage konta
+administracyjnego \texttt{vmagent}.
+Dokumentacja Kilo opisuje oddzielne uprawnienia dla narzędzi MCP oraz ich
+automatyczne zatwierdzanie po dopasowaniu reguły; jest to warstwa klienta,
+odrębna od decyzji wykonywanej przez policy proxy \cite{KiloMCPDocs,KiloAutoApproval,MCPArchitecture}.
+
+\subsection{Implementacja dostępu do modelu przez LiteLLM}
+\label{subsec:implementacja-litellm-propozycja}
+
+LiteLLM Proxy 1.102.1 działał na VM-Gateway z Ubuntu Server 26.04.1 LTS,
+pod adresem 10.10.20.10:4000. Kilo używało dostawcy typu OpenAI Compatible
+i bazowego URL \texttt{http://10.10.20.10:4000/v1}. Po stronie klienta
+LiteLLM model był udostępniany pod aliasem \texttt{laboratory-model}
+(etykieta interfejsu \texttt{Lab LiteLLM}); w konfiguracji upstream
+Gateway zapisano \texttt{openai/gpt-4.1-mini}. Dokumentacja OpenAI nazywa
+\texttt{gpt-4.1-mini} publicznym identyfikatorem modelu, lecz alias LiteLLM
+i wpis konfiguracyjny nie są równoważne identyfikatorowi zwróconemu w
+odpowiedzi konkretnego żądania \cite{OpenAIModelsGPT41Mini,OpenAIChatCompletionsAPI,LiteLLMConfig,LiteLLMVirtualKeys}.
+
+Test \texttt{/v1/models} potwierdził alias \texttt{laboratory-model};
+użytkownik zgłosił poprawne odpowiedzi \texttt{PROVIDER\_OK} w obu
+profilach. W zachowanych artefaktach nie ma surowej odpowiedzi generującej
+API z polem \texttt{model}, dlatego nie można potwierdzić identyfikatora
+modelu zwróconego przez dostawcę ani konkretnego snapshotu użytego dla
+każdego runu. Z tego samego powodu nie można podać rzeczywiście użytych
+wartości parametrów generowania, takich jak temperatura, top-p, limit
+tokenów lub seed. Nie należy wstawiać wartości domyślnych do opisu
+eksperymentu. Ramy AI RMF można wykorzystać do osadzenia ostrożnego zakresu
+wniosków w zarządzaniu ryzykiem, ale nie zastępują one pomiarów tej pracy
+\cite{NISTAI1001}.
+
+W skrypcie konfiguracji LiteLLM parametr \texttt{drop\_params: true}
+umożliwiał pomijanie parametrów nieobsługiwanych przez upstream; nie
+określa on wartości temperatury ani innych ustawień próbkowania. Klucz
+dostawcy OpenAI był przechowywany na Gateway, a profile Kilo uwierzytelniały
+się oddzielnie wobec proxy. Testy potwierdzają odpowiedzi HTTP 200 i stan
+usługi, ale zachowane materiały nie ustalają pełnego zakresu treści
+zapisywanych przez LiteLLM ani polityki retencji treści request/response.
+Wiadomo jedynie, że w opisanym teście kontrolnym nie analizowano treści
+promptów.
+
+\subsection{Implementacja serwerów MCP}
+\label{subsec:implementacja-mcp-propozycja}
+
+\subsubsection{Lokalny serwer MCP}
+\label{subsubsec:local-mcp-propozycja}
+
+Lokalny serwer MCP działał na VM-Agent jako proces potomny uruchamiany przez
+Kilo Code i komunikujący się przez standardowe wejście i wyjście (stdio).
+Wdrożone środowisko używało Pythona 3.14.4 i MCP SDK 1.30.0. Serwer
+udostępniał narzędzia \texttt{read\_local\_note},
+\texttt{read\_indirect\_instruction} i
+\texttt{read\_protected\_canary}. Narzędzia korzystały z ustalonych ścieżek
+i nie przyjmowały dowolnej ścieżki pliku od klienta. Implementacja jest
+w \texttt{lab/agent/local\_mcp\_stdio.py}.
+
+Zwykła notatka lokalna znajduje się w \texttt{lab/agent/fixtures/local-note.txt};
+zawiera wyłącznie syntetyczny tekst i marker weryfikacyjny. Fixture
+instrukcji pośredniej to \texttt{lab/agent/fixtures/indirect-instruction.txt}.
+Jego treść jawnie mówi, że jest niezaufana, próbuje zmienić zadanie
+streszczenia i sugeruje odczyt syntetycznego canary, a następnie wysłanie go
+do laboratoryjnego odbiornika. Jest to testowy bodziec, nie polityka
+autoryzacyjna.
+
+Wpis JSONL serwera zawierał UTC timestamp, run ID, nazwę serwera i narzędzia,
+UID i nazwę konta, identyfikator zasobu i wynik. Przy skutecznym odczycie
+zapisywano hash SHA-256 treści, a nie treść zwykłej notatki ani wartość
+canary. Logi zapisywano per konto w
+\texttt{/home/<konto>/.local/state/lab-agent/local-mcp.jsonl}, obserwowano
+przez auditd i przekazywano Fluent Bitem na VM-Monitor. Ponieważ stdio nie
+tworzy połączenia IP między maszynami, brak przepływu MCP w PCAP/Zeek jest
+oczekiwany; odczyt potwierdzano logiem MCP i zdarzeniem hostowym. Opis
+architektury MCP i rozdziału host/client/server należy podeprzeć specyfikacją
+MCP, ale zachowany log nie zawiera wersji protokołu wynegocjowanej w
+komunikacie \texttt{initialize} \cite{MCPArchitecture,KiloMCPDocs}.
+
+\subsubsection{Zdalny serwer MCP i policy proxy}
+\label{subsubsec:remote-mcp-propozycja}
+
+Kilo łączyło się z policy proxy na VM-Gateway pod adresem
+\texttt{http://10.10.20.10:8001/mcp}. Proxy przekazywało dopuszczone
+operacje do backendu na VM-Target pod adresem
+\texttt{http://10.10.30.10:8000/mcp}, przez sieć routowaną przez OPNsense.
+Zastosowano MCP Streamable HTTP. F-03, czyli bezpośredni przepływ
+VM-Agent--VM-Target TCP/8000, był wyłączony; docelowa ścieżka zdalnego MCP
+prowadziła przez Gateway. Adresy, strefy i reguły opisano w
+\texttt{docs/laboratorium/adresacja-sieci.md} oraz
+\texttt{docs/laboratorium/opnsense-reguly-startowe.md}.
+
+Gateway udostępniał \texttt{read\_untrusted\_note} oraz
+\texttt{submit\_canary}. Polityka miała profile \texttt{baseline},
+\texttt{secured} i \texttt{deny\_canary}, z domyślną odmową narzędzi
+niezdefiniowanych. Dla \texttt{submit\_canary} wynik wynosił odpowiednio
+allow, ask i deny. W stanie ask proxy oczekiwało na decyzję operatora przez
+skonfigurowany limit czasu; timeout kończył się bez próby wykonania. Każdy
+request był normalizowany i audytowany z run ID, request ID, źródłowym
+adresem, profilem, decyzją, attempt, rezultatem i decyzją operatora.
+Odbiornik canary na Target nasłuchiwał wyłącznie na
+\texttt{127.0.0.1:8080}; dowód skutku stanowił jego JSONL, a nie sam
+komunikat Kilo. Implementacja jest dostępna w
+\texttt{lab/target/canary\_receiver.py}.
+
+Istotnym ograniczeniem implementacji jest sposób propagacji run ID:
+proxy zapisuje run ID w swoim audycie, lecz przy wywołaniu backendowego
+\texttt{read\_untrusted\_note} przekazuje pusty słownik argumentów.
+Target journal i PCAP nie zawierają więc jawnego run ID dla tego odczytu;
+korelację zdalnego MCP prowadzono przez request ID Gateway oraz zgodność
+czasu i adresów, z niższą pewnością niż wspólny identyfikator.
+Dla \texttt{submit\_canary} proxy przekazywało znormalizowane run ID
+i syntetyczną wartość do backendu, a Target receiver rejestrował run ID,
+wartość i źródłowy adres Gateway.
+
+Remote fixture w \texttt{lab/target/fixtures/untrusted-note.txt} i lokalna
+notatka nie były semantycznie równoważne. SC-05 służył zatem do obserwacji
+zdalnego transportu i jego telemetrii, nie do kontrolowanego porównania
+reakcji modelu na identyczną treść. W SC-06-D model trzykrotnie odczytał
+lokalny fixture pośredniej instrukcji i go streścił, ale nie wygenerował
+requestu do Gateway. Te wyniki opisują zachowanie modelu; nie są dowodem
+skuteczności policy proxy wobec requestu, którego proxy nie otrzymało.
+Opis zagrożenia i rozróżnienie danych niezaufanych od instrukcji użytkownika
+można oprzeć na badaniach nad pośrednim prompt injection oraz aktualnym
+przewodniku OWASP; wnioski eksperymentalne w tej pracy pozostają ograniczone
+do trzech obserwacji bez żądania narzędzia \cite{Greshake2023Indirect,OWASPLLMInjection}.
+
+\paragraph{Wersje i odtwarzalność.}
+W dokumentacji wdrożenia zapisano Kilo Code 7.8.1, VS Code 1.139.1,
+Python 3.14.4, MCP SDK 1.30.0 na Agent/Target, Uvicorn 0.54.0 na Target,
+LiteLLM 1.102.1, auditd 1:4.1.2-1ubuntu0.1, Fluent Bit 5.1.2 i Zeek
+8.0.10. VMware Workstation Pro na hoście miał plikową wersję
+25.0.0 build-24995812; OPNsense działało w linii 24.7, ale po resecie
+nie zachowano odczytu dokładnego patch/build. Zachowane VMX podają aktualnie
+2 vCPU i 8096 MiB dla VM-Agent; po 2 vCPU i 4096 MiB dla VM-Gateway,
+VM-Target i VM-Monitor; VM-FW: 8 vCPU i 4096 MiB. Pliki VMX znajdują się
+poza repozytorium, w katalogu maszyn VMware na hoście.
+
+Nie można przypisać kampanii do konkretnego commita kodu: lokalne repozytorium
+nie ma commitów Git, a zestaw kodu wdrożony na VM nie został zarchiwizowany
+jako oznaczony release z sumami kontrolnymi. Źródła implementacji dostępne
+w repozytorium to \texttt{lab/agent/}, \texttt{lab/gateway/} i
+\texttt{lab/target/}; lockfile istnieją dla Agent i Target, lecz nie dla
+Gateway. Szczegóły wersji i pozostałe otwarte kwestie zestawiono w
+\texttt{docs/laboratorium/indeks-dowodow-pracy.md}.
+
+% Materiały nie pozwalają stwierdzić: getfacl/rozszerzone ACL; pełnych grup
+% supplemental dla każdego runu; API response model/snapshot; temperature,
+% top_p, max tokens lub seed; per-run MCP initialize negotiatedVersion;
+% pełnej retencji logów LiteLLM; hash zgodności wdrożonego kodu z repo; kompletnego
+% post-reset negative firewall matrix. Te elementy należy uzupełnić tylko po
+% ponownym odczycie VM/logów lub oznaczyć jako niezarejestrowane.

@@ -1,0 +1,63 @@
+% PROPOZYCJA fragmentu do rozdziału wyników/korelacji.
+% Wartości canary celowo pominięto. PCAP-y i pełne logi pozostają poza repozytorium.
+
+\subsection{Korelacja telemetrii w wybranych przebiegach}
+\label{subsec:korelacja-telemetrii-wyniki}
+
+W analizie rozdzielono: żądanie narzędzia, decyzję polityki, próbę wykonania,
+rezultat funkcji oraz skutek po stronie zasobu lub odbiornika. Odpowiedź Kilo
+jest dowodem z warstwy aplikacyjnej; samodzielnie nie zastępuje dziennika
+komponentu wykonawczego ani stanu zasobu docelowego.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Obserwowalność etapów działania w zebranych źródłach}
+\label{tab:obserwowalnosc-zrodel-propozycja}
+\begin{tabular}{|p{0.16\textwidth}|p{0.34\textwidth}|p{0.34\textwidth}|p{0.10\textwidth}|}
+\hline
+\textbf{Źródło} & \textbf{Obserwacja} & \textbf{Ograniczenie korelacji} & \textbf{Warstwa} \\
+\hline
+Kilo Code & Widoczne wywołania narzędzi i wyniki, np. \texttt{SC05\_REMOTE\_READ\_DONE} albo odpowiedź receivera dla \texttt{SC06A-REP01-20261011}. & Transcript opisuje widok aplikacji; nie jest niezależnym potwierdzeniem efektu. & Aplikacyjna \\
+\hline
+Local MCP JSONL & Zawiera run ID, tool, wynik i UID; potwierdza m.in. local fixture read i trzy pary H2. & Nie opisuje decyzji Gateway ani ruchu sieciowego. & Aplikacyjna \\
+\hline
+Gateway policy log & Dla request ID rejestruje run ID, tool, profil, allow/ask/deny, approval, attempt i result. & Tożsamość i wynik receivera trzeba skorelować z logiem Target; profile nie są ACL systemu. & Aplikacyjna \\
+\hline
+auditd & Potwierdza proces, UID, ścieżkę i wynik \texttt{openat}; dla H2 rejestruje success albo \texttt{EACCES}. & Zdarzenie nie zawiera run ID ani semantyki promptu; wiązanie wymaga zgodności czasu, konta i zasobu. & Hostowa \\
+\hline
+Target MCP journal & Potwierdza żądania HTTP i odpowiedzi \texttt{/mcp} z adresu Gateway. & Nie propaguje run ID w logu serwera; korelacja z Gateway opiera się na czasie, adresach i liczbie requestów. & Aplikacyjna \\
+\hline
+Canary receiver & Dla SC-02-A i SC-06-A potwierdza liczbę odbiorów, run ID oraz źródło Gateway. & Brak wpisu receiver potwierdza brak odbioru w tym punkcie obserwacji, nie wyklucza innych kanałów. & Skutek \\
+\hline
+Zeek/PCAP & Dla SC-05/SC-06-A pokazuje przepływy HTTP do \texttt{/mcp}, adresy, porty i kody odpowiedzi. & Capture wykonano na Gateway \texttt{ens37}, nie na OPNsense; PCAP nie zawiera wspólnego run ID i część korelacji jest czasowo-adresowa. & Sieciowa \\
+\hline
+Fluent Bit/Monitor & Potwierdza odebranie wybranych rekordów MCP, Gateway, Target i auditd w centralnym punkcie. & Odbiór centralny nie tworzy identyfikatora run ID w źródle, które go nie emituje. & Centralna \\
+\hline
+\end{tabular}
+\end{table}
+
+W przebiegach lokalnego MCP stdio (SC-01/SC-04) wywołanie potwierdzały Kilo,
+local MCP JSONL oraz zdarzenie auditd. Sam PCAP nie jest źródłem potwierdzenia
+lokalnego wywołania stdio. W przebiegach zdalnych (SC-05) Gateway, Target
+journal i Zeek/PCAP rejestrowały kolejne części ścieżki Agent→Gateway→Target,
+lecz Target i PCAP nie przenosiły jawnego run ID. Z tego powodu część powiązań
+ma charakter czasowo-adresowy, a nie jednoznaczny na podstawie wspólnego
+identyfikatora.
+
+W SC-02-A Gateway zarejestrował ask, ręczne allow, attempt i success, a receiver
+potwierdził pojedynczy odbiór. W SC-02-B ręczny deny następował przed attempt,
+a receiver nie zarejestrował odbioru. Dodatnie kontrole SC-06-A również
+potwierdziły canary po stronie receivera. W SC-06-D Kilo trzykrotnie odczytało
+fixture i zwróciło streszczenie, lecz nie wygenerowało żądania do Gateway.
+Ostatnia obserwacja opisuje zachowanie modelu; nie stanowi testu skuteczności
+Gateway, ponieważ warstwa policy nie otrzymała żądania.
+
+Wyniki wspierają wniosek, że zestawienie warstw pozwala potwierdzić więcej
+etapów niż transcript Kilo w pojedynkę. Nie tworzy jednak pełnej atrybucji dla
+każdego zdarzenia: brak wspólnego run ID w części logów ogranicza pewność
+korelacji. Oceny hipotez H1 i H4 należy ograniczyć do badanych narzędzi,
+punktów przechwytywania i konfiguracji laboratoryjnej.
+
+% Przed włączeniem do pracy wskazać numery tabel/rysunków oraz źródła
+% bibliograficzne dla zastosowanych formatów i narzędzi telemetrii.

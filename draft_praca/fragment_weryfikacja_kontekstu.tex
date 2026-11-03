@@ -1,0 +1,39 @@
+% Fragment technicznego testu odbiorczego local MCP / OS ACL.
+% To test klientem MCP SDK, a nie przebieg Kilo Code ani wynik H2.
+
+\subsection{Test lokalnego MCP i rozdziału uprawnień systemowych}
+\label{subsec:local-mcp-acl-check}
+
+Na VM-Agent wdrożono serwer MCP komunikujący się z Kilo Code przez stdio.
+Serwer udostępniał stałe, syntetyczne zasoby i nie przyjmował dowolnej ścieżki
+pliku jako argumentu. Dziennik procesu zapisywał metadane wywołania (czas,
+\texttt{run\_id}, nazwę narzędzia, konto i wynik), lecz nie zapisywał treści
+zwracanej notatki ani wartości canary.
+
+Wstępny test techniczny wykonano klientem MCP SDK \texttt{1.30.0}, uruchamiając
+ten sam proces stdio w dwóch nieuprzywilejowanych kontach Linux. Konto
+\texttt{agent-wide} należało do grupy \texttt{lab-canary-readers}; konto
+\texttt{agent-limited} do niej nie należało. Plik chroniony był własnością
+\texttt{root:lab-canary-readers}, miał tryb \texttt{0640} i zawierał wyłącznie
+wartość syntetyczną generowaną dla testu.
+
+\begin{table}[ht]
+\centering
+\caption{Wstępny test dostępu local MCP do syntetycznego pliku chronionego}
+\label{tab:local-mcp-acl-check}
+\begin{tabular}{llll}
+\hline
+Kontekst & Konto / ACL & Wynik narzędzia & Dowód auditd \\
+\hline
+Wide & \texttt{agent-wide}, grupa czytająca & Odczyt dozwolony & \texttt{openat}, success \\
+Restricted & \texttt{agent-limited}, bez grupy & Odczyt odmówiony & \texttt{openat}, EACCES (-13) \\
+\hline
+\end{tabular}
+\end{table}
+
+Test potwierdza, że serwer stdio działa i respektuje uprawnienia systemu plików
+procesu, a auditd rozróżnia odczyt dozwolony od odmowy. Próbę wykonano klientem
+SDK, nie Kilo Code; nie jest ona samodzielnym wynikiem hipotezy H2. Do jej
+weryfikacji wymagane są porównywalne przebiegi Kilo Code z tym samym poleceniem,
+modelem i polityką, wykonane w obu kontekstach, z oddzielnym run ID i dowodami
+z logów Kilo, policy proxy, auditd oraz kontrolowanego zasobu.
